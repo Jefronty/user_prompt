@@ -19,29 +19,51 @@ class TimeoutOccurred(Exception):
 	pass
 
 
-def user_prompt(prompt='', timeout=None, hide_input=False):
+def user_prompt(prompt='', timeout=None, hide_input=False, default=None):
+	"""
+	primary user input function
+	Args:
+		prompt (str): text displayed to user
+		timeout (int, float): the number of seconds to wait for a response
+		hide_input (bool): option whether response text is visible
+		default (mixed): optional default value instead of raising Exception on timeout
+	Returns:
+		str: user's input or default
+	"""
 	if timeout is None:
 		if hide_input:
-			return getpass.getpass(prompt)
+			return getpass.getpass(prompt) or default or ''
 		if sys.version_info[0] < 3:
-			return raw_input(prompt)
+			return raw_input(prompt) or default or ''
 		else:
-			return input(prompt)
+			return input(prompt) or default or ''
 	if platform == 'Windows':
 		return win_timed_prompt(
 			prompt=prompt,
 			timeout=timeout,
-			hide_input=hide_input
+			hide_input=hide_input,
+			default=default
 		)
 	else:
 		return posix_timed_prompt(
 			prompt=prompt,
 			timeout=timeout,
-			hide_input=hide_input
+			hide_input=hide_input,
+			default=default
 		)
 
 
-def posix_timed_prompt(prompt='', timeout=DEFAULT_TIMEOUT, hide_input=False):
+def posix_timed_prompt(prompt='', timeout=DEFAULT_TIMEOUT, hide_input=False, default=None):
+	"""
+	the input handler for unix-like systems
+	Args:
+		prompt (str): text displayed to user
+		timeout (int, float): the number of seconds to wait for a response
+		hide_input (bool): option whether response text is visible
+		default (mixed): optional default value instead of raising Exception on timeout
+	Returns:
+		str: user's input or default
+	"""
 	old_settings = None
 	if hide_input:
 		old_settings = termios.tcgetattr(sys.stdin.fileno())
@@ -59,7 +81,9 @@ def posix_timed_prompt(prompt='', timeout=DEFAULT_TIMEOUT, hide_input=False):
 		if ready:
 			return sys.stdin.readline().rstrip('\n')
 		else:
-			raise TimeoutOccurred
+			if default is None:
+				raise TimeoutOccurred
+			return default
 	finally:
 		if old_settings is not None:
 			termios.tcsetattr(
@@ -74,7 +98,17 @@ def put_str(string):
 		msvcrt.putwch(c)
 
 
-def win_timed_prompt(prompt='', timeout=DEFAULT_TIMEOUT, hide_input=False):
+def win_timed_prompt(prompt='', timeout=DEFAULT_TIMEOUT, hide_input=False, default=None):
+	"""
+	the input handler for Windows systems
+	Args:
+		prompt (str): text displayed to user
+		timeout (int, float): the number of seconds to wait for a response
+		hide_input (bool): option whether response text is visible
+		default (mixed): optional default value instead of raising Exception on timeout
+	Returns:
+		str: user's input or default
+	"""
 	clock = getattr(time, 'monotonic', time.time)
 	begin = clock()
 	end = begin + timeout
@@ -97,4 +131,6 @@ def win_timed_prompt(prompt='', timeout=DEFAULT_TIMEOUT, hide_input=False):
 					msvcrt.putwch(c)
 				line = line + c
 		time.sleep(0.05)
-	raise TimeoutOccurred
+	if default is None:
+		raise TimeoutOccurred
+	return default
