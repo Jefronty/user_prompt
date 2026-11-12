@@ -12,6 +12,10 @@ import sys
 name = user_input("username: ", 20, default='')
 
 # timed prompt with input not displayed to terminal
-password = user_input("Password: ", 35, True)
+try:
+	password = user_input("Password: ", 35, True)
+except:
+	print('No password entered')
+	sys.exit()
 
 ```
