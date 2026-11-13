@@ -5,15 +5,15 @@ I used the python 2.7 version of [inputimeout](https://github.com/johejo/inputim
 
 # Example
 ```
-from user_input import user_input
+from user_prompt import user_prompt
 import sys
 
 # timed prompt with default value, no timeout Exception
-name = user_input("username: ", 20, default='')
+name = user_prompt("username: ", 20, default='')
 
 # timed prompt with input not displayed to terminal
 try:
-	password = user_input("Password: ", 35, True)
+	password = user_prompt("Password: ", 35, True)
 except:
 	print('No password entered')
 	sys.exit()
